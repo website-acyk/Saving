@@ -927,7 +927,7 @@
     lines.push('<strong>' + monthName + ' summary —</strong> income ' + fmt(incomeMonth) + ', expenses ' + fmt(expenseMonth) + ', saved ' + fmt(savedMonth) + ' (' + pct(rate) + ' savings rate).');
     if (topCat && topAmt>0) lines.push('Your highest spending category was ' + topCat.emoji + ' ' + topCat.key + ' at ' + fmt(topAmt) + '.');
     if (Math.abs(diff) >= 10) lines.push('You spent ' + fmt(Math.abs(diff)) + ' ' + (diff>0?'more':'less') + ' on Shopping than last month.');
-    if (diff > 0) lines.push('If you trim Shopping by ' + fmt(Math.min(diff,200)) + '/month, that\\'s roughly ' + fmt(Math.min(diff,200)*12) + ' saved over a year.');
+    if (diff > 0) lines.push('If you trim Shopping by ' + fmt(Math.min(diff,200)) + '/month, that\'s roughly ' + fmt(Math.min(diff,200)*12) + ' saved over a year.');
     else if (rate < 20 && incomeMonth>0) lines.push('Your savings rate is under 20% — even an extra RM50/month set aside adds up to RM600 over a year.');
     el.innerHTML = '<div class="insight-box">' + lines.join('<br>') + '</div>';
   }
@@ -1218,7 +1218,7 @@
   function renderBudget() {
     var now = new Date();
     var curKey = now.toISOString().slice(0,7);
-    document.getElementById('budget-sub').textContent = 'Monthly limits by category — tracked against ' + now.toLocaleDateString('en-MY',{month:'long'}) + '\\'s spending.';
+    document.getElementById('budget-sub').textContent = 'Monthly limits by category — tracked against ' + now.toLocaleDateString('en-MY',{month:'long'}) + '\'s spending.';
     var body = document.getElementById('budget-body');
     body.innerHTML = CATS.map(function(c){
       var budget = Number(state.budgets[c.key]||0);
@@ -1355,7 +1355,7 @@
     var rows = state.expenses.filter(function(x){ return monthKey(x.date)===key; }).sort(function(a,b){ return a.date.localeCompare(b.date); });
     var wrap = document.getElementById('statement-sheet-wrap');
     if (!rows.length) {
-      wrap.innerHTML = '<div class="sheet-empty">No expenses recorded for ' + monthTitle(key) + ' yet. Add some in the Expenses tab and they\\'ll appear here, grouped by category.</div>';
+      wrap.innerHTML = '<div class="sheet-empty">No expenses recorded for ' + monthTitle(key) + ' yet. Add some in the Expenses tab and they\'ll appear here, grouped by category.</div>';
       return;
     }
     var totalSpent = rows.reduce(function(a,r){return a+Number(r.amount);},0);
