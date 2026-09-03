@@ -400,7 +400,7 @@
             </div>
             <div class="field"><label for="i-source">Source</label>
               <select id="i-source">
-                <option>Salary</option><option>Freelance</option><option>Allowance</option><option>Business</option><option>Other</option>
+                <option>生活费 (Living Allowance)</option><option>Part-time Job</option><option>Scholarship</option><option>Freelance</option><option>Salary</option><option>Business</option><option>Other</option>
               </select>
             </div>
             <div class="field"><label for="i-desc">Description</label><input type="text" id="i-desc" placeholder="e.g. September salary"></div>
@@ -425,7 +425,7 @@
             <div class="field"><label>From</label><input type="date" id="i-filter-from"></div>
             <div class="field"><label>To</label><input type="date" id="i-filter-to"></div>
             <div class="field"><label>Source</label>
-              <select id="i-filter-source"><option value="">All</option><option>Salary</option><option>Freelance</option><option>Allowance</option><option>Business</option><option>Other</option></select>
+              <select id="i-filter-source"><option value="">All</option><option>生活费 (Living Allowance)</option><option>Part-time Job</option><option>Scholarship</option><option>Freelance</option><option>Salary</option><option>Business</option><option>Other</option></select>
             </div>
             <button class="btn small secondary" id="income-filter-clear">Clear</button>
           </div>
@@ -638,17 +638,17 @@
     function d(offsetDays) { var t = new Date(now); t.setDate(t.getDate()-offsetDays); return t.toISOString().slice(0,10); }
     function monthsAgo(n, day) { var t = new Date(now.getFullYear(), now.getMonth()-n, day||10); return t.toISOString().slice(0,10); }
     var income = [
-      { id: uid(), date: monthsAgo(0,1), amount: 2500, source: "Salary", description: "September salary", method: "Bank Transfer" },
-      { id: uid(), date: d(2), amount: 300, source: "Freelance", description: "Logo design gig", method: "E-Wallet" },
-      { id: uid(), date: monthsAgo(1,1), amount: 2500, source: "Salary", description: "August salary", method: "Bank Transfer" },
-      { id: uid(), date: monthsAgo(1,15), amount: 250, source: "Freelance", description: "Tutoring", method: "Cash" },
-      { id: uid(), date: monthsAgo(2,1), amount: 2450, source: "Salary", description: "July salary", method: "Bank Transfer" },
-      { id: uid(), date: monthsAgo(3,1), amount: 2450, source: "Salary", description: "June salary", method: "Bank Transfer" },
-      { id: uid(), date: monthsAgo(4,1), amount: 2400, source: "Salary", description: "May salary", method: "Bank Transfer" },
-      { id: uid(), date: monthsAgo(5,1), amount: 2400, source: "Salary", description: "April salary", method: "Bank Transfer" },
-      { id: uid(), date: monthsAgo(9,1), amount: 2300, source: "Salary", description: "December salary", method: "Bank Transfer" },
-      { id: uid(), date: monthsAgo(10,1), amount: 2300, source: "Salary", description: "November salary", method: "Bank Transfer" },
-      { id: uid(), date: monthsAgo(11,1), amount: 2250, source: "Salary", description: "October salary", method: "Bank Transfer" }
+      { id: uid(), date: monthsAgo(0,1), amount: 800, source: "生活费 (Living Allowance)", description: "September living allowance", method: "Bank Transfer" },
+      { id: uid(), date: d(2), amount: 300, source: "Part-time Job", description: "Cafe shift hours", method: "E-Wallet" },
+      { id: uid(), date: monthsAgo(1,1), amount: 800, source: "生活费 (Living Allowance)", description: "August living allowance", method: "Bank Transfer" },
+      { id: uid(), date: monthsAgo(1,15), amount: 250, source: "Part-time Job", description: "Tutoring", method: "Cash" },
+      { id: uid(), date: monthsAgo(2,1), amount: 800, source: "生活费 (Living Allowance)", description: "July living allowance", method: "Bank Transfer" },
+      { id: uid(), date: monthsAgo(3,1), amount: 800, source: "生活费 (Living Allowance)", description: "June living allowance", method: "Bank Transfer" },
+      { id: uid(), date: monthsAgo(4,1), amount: 800, source: "生活费 (Living Allowance)", description: "May living allowance", method: "Bank Transfer" },
+      { id: uid(), date: monthsAgo(5,1), amount: 800, source: "生活费 (Living Allowance)", description: "April living allowance", method: "Bank Transfer" },
+      { id: uid(), date: monthsAgo(9,1), amount: 750, source: "生活费 (Living Allowance)", description: "December living allowance", method: "Bank Transfer" },
+      { id: uid(), date: monthsAgo(10,1), amount: 750, source: "生活费 (Living Allowance)", description: "November living allowance", method: "Bank Transfer" },
+      { id: uid(), date: monthsAgo(11,1), amount: 750, source: "生活费 (Living Allowance)", description: "October living allowance", method: "Bank Transfer" }
     ];
     var expenses = [
       { id: uid(), date: d(0), amount: 12.50, category: "Food", description: "Lunch, mixed rice", method: "Cash" },
