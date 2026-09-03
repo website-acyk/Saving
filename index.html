@@ -283,6 +283,13 @@
 
   .yoy-note { font-size: 12.5px; color: var(--ink-soft); padding: 20px; text-align: center; border: 1px dashed var(--border); }
 
+  /* ---------- Accounts lock ---------- */
+  .lock-card { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+  .lock-card .lock-icon { font-size: 26px; margin-bottom: 6px; }
+  .lock-card form { display: flex; flex-direction: column; gap: 11px; margin-top: 4px; width: 100%; }
+  .lock-error { font-size: 12.5px; color: var(--debit); min-height: 1.2em; }
+  .tab-lock { font-size: 12px; opacity: 0.85; }
+
   @media (prefers-reduced-motion: no-preference) {
     .card, .tab-btn, .btn { transition: box-shadow .15s ease, background .12s ease, filter .12s ease; }
   }
@@ -329,7 +336,7 @@
       <button class="tab-btn active" data-tab="dashboard"><span class="idx num">01</span>Dashboard</button>
       <button class="tab-btn" data-tab="income"><span class="idx num">02</span>Income</button>
       <button class="tab-btn" data-tab="expenses"><span class="idx num">03</span>Expenses</button>
-      <button class="tab-btn" data-tab="accounts"><span class="idx num">04</span>Accounts</button>
+      <button class="tab-btn" data-tab="accounts"><span class="idx num">04</span>Accounts<span class="tab-lock" id="accounts-tab-lock" style="margin-left:auto;display:none;">🔒</span></button>
       <button class="tab-btn" data-tab="savings"><span class="idx num">05</span>Savings</button>
       <button class="tab-btn" data-tab="budget"><span class="idx num">06</span>Budget</button>
       <button class="tab-btn" data-tab="trends"><span class="idx num">07</span>Trends</button>
@@ -493,25 +500,47 @@
       <div class="view-head">
         <div><h1 class="stencil">Accounts</h1><div class="sub">How much you currently have in each bank or e-wallet.</div></div>
       </div>
-      <div class="record-layout">
-        <div class="slip">
-          <div class="slip-title">Add Account</div>
-          <form class="entry-form" id="account-form">
-            <div class="field"><label for="a-name">Bank / e-wallet name</label><input type="text" id="a-name" placeholder="e.g. GX Bank" required></div>
-            <div class="field"><label for="a-amount">Current amount (RM)</label><input type="number" id="a-amount" min="0" step="0.01" placeholder="0.00" required></div>
-            <div class="form-actions">
-              <button type="submit" class="btn" id="account-submit-btn">Add account</button>
-              <button type="button" class="btn secondary" id="account-cancel-btn" style="display:none;">Cancel</button>
-            </div>
-          </form>
-        </div>
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
-            <h2 class="stencil" style="margin-bottom:0;">Your Accounts</h2>
-            <div class="num" style="font-size:18px;font-weight:700;" id="accounts-total">RM 0.00</div>
+
+      <div class="card lock-card" id="accounts-lock" style="max-width:380px;">
+        <div class="lock-icon">🔒</div>
+        <h2 class="stencil" id="accounts-lock-title">Set a passcode</h2>
+        <div class="card-sub" id="accounts-lock-sub">Protect this tab so no one else can see your account balances.</div>
+        <form id="accounts-lock-form" autocomplete="off">
+          <div class="field"><label for="accounts-pin-1" id="accounts-pin-1-label">New passcode</label><input type="password" inputmode="numeric" id="accounts-pin-1" placeholder="e.g. 4 digits or a word" required></div>
+          <div class="field" id="accounts-pin-2-wrap"><label for="accounts-pin-2">Confirm passcode</label><input type="password" inputmode="numeric" id="accounts-pin-2" placeholder="Re-enter passcode"></div>
+          <div class="lock-error" id="accounts-lock-error"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn" id="accounts-lock-submit-btn">Set passcode &amp; unlock</button>
           </div>
-          <div class="card-sub" style="margin-top:2px;">Total across all accounts</div>
-          <div id="accounts-list"></div>
+        </form>
+      </div>
+
+      <div id="accounts-content" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="btn small secondary" id="accounts-relock-btn">🔒 Lock this tab</button>
+          <button class="btn small secondary" id="accounts-change-pin-btn">Change passcode</button>
+          <button class="btn small secondary" id="accounts-remove-pin-btn">Remove passcode</button>
+        </div>
+        <div class="record-layout">
+          <div class="slip">
+            <div class="slip-title">Add Account</div>
+            <form class="entry-form" id="account-form">
+              <div class="field"><label for="a-name">Bank / e-wallet name</label><input type="text" id="a-name" placeholder="e.g. GX Bank" required></div>
+              <div class="field"><label for="a-amount">Current amount (RM)</label><input type="number" id="a-amount" min="0" step="0.01" placeholder="0.00" required></div>
+              <div class="form-actions">
+                <button type="submit" class="btn" id="account-submit-btn">Add account</button>
+                <button type="button" class="btn secondary" id="account-cancel-btn" style="display:none;">Cancel</button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+              <h2 class="stencil" style="margin-bottom:0;">Your Accounts</h2>
+              <div class="num" style="font-size:18px;font-weight:700;" id="accounts-total">RM 0.00</div>
+            </div>
+            <div class="card-sub" style="margin-top:2px;">Total across all accounts</div>
+            <div id="accounts-list"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -741,6 +770,7 @@
     if (!state.budgets) state.budgets = {};
     if (!state.allowances) state.allowances = {};
     if (!state.accounts) state.accounts = [];
+    if (!('accountsPin' in state)) state.accountsPin = null;
     CATS.forEach(function(c){ if (!(c.key in state.budgets)) state.budgets[c.key] = 0; });
   }
 
@@ -793,6 +823,7 @@
     document.querySelectorAll('.view').forEach(function(v){ v.classList.toggle('active', v.id === 'view-'+tab); });
     if (tab === 'trends') renderTrends();
     if (tab === 'statement') renderStatement();
+    if (tab === 'accounts') renderAccountsLock();
   });
 
   // ---------- Sample banner ----------
@@ -801,7 +832,8 @@
     if (state.seeded) {
       slot.innerHTML = '<div class="sample-banner"><span><span class="stamp-tag">Specimen</span>These entries are examples so you can see how Kira works. Add your own anytime.</span><button id="clear-sample-btn">Start fresh</button></div>';
       document.getElementById('clear-sample-btn').addEventListener('click', function(){
-        state = { income: [], expenses: [], savings: [], budgets: {}, allowances: {}, accounts: [], seeded: false };
+        var keepPin = state.accountsPin || null;
+        state = { income: [], expenses: [], savings: [], budgets: {}, allowances: {}, accounts: [], accountsPin: keepPin, seeded: false };
         CATS.forEach(function(c){ state.budgets[c.key] = 0; });
         persist();
         renderAll();
@@ -1258,6 +1290,90 @@
     }
   });
 
+  // ---------- Accounts lock ----------
+  var accountsUnlocked = false;
+  function accountsHasPin() { return !!(state.accountsPin && String(state.accountsPin).length); }
+  function accountsIsLocked() { return accountsHasPin() && !accountsUnlocked; }
+  function renderAccountsLock() {
+    var lockEl = document.getElementById('accounts-lock');
+    var contentEl = document.getElementById('accounts-content');
+    var tabIcon = document.getElementById('accounts-tab-lock');
+    var errEl = document.getElementById('accounts-lock-error');
+    if (tabIcon) tabIcon.style.display = accountsHasPin() ? '' : 'none';
+    if (errEl) errEl.textContent = '';
+    var form = document.getElementById('accounts-lock-form');
+    if (form) form.reset();
+    if (!accountsHasPin()) {
+      lockEl.style.display = '';
+      contentEl.style.display = 'none';
+      document.getElementById('accounts-lock-title').textContent = 'Set a passcode';
+      document.getElementById('accounts-lock-sub').textContent = 'Protect this tab so no one else can see your account balances.';
+      document.getElementById('accounts-pin-1-label').textContent = 'New passcode';
+      document.getElementById('accounts-pin-2-wrap').style.display = '';
+      document.getElementById('accounts-lock-submit-btn').textContent = 'Set passcode & unlock';
+    } else if (accountsIsLocked()) {
+      lockEl.style.display = '';
+      contentEl.style.display = 'none';
+      document.getElementById('accounts-lock-title').textContent = 'Enter passcode';
+      document.getElementById('accounts-lock-sub').textContent = 'This tab is locked. Enter your passcode to view your accounts.';
+      document.getElementById('accounts-pin-1-label').textContent = 'Passcode';
+      document.getElementById('accounts-pin-2-wrap').style.display = 'none';
+      document.getElementById('accounts-lock-submit-btn').textContent = 'Unlock';
+    } else {
+      lockEl.style.display = 'none';
+      contentEl.style.display = '';
+    }
+  }
+  document.getElementById('accounts-lock-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var errEl = document.getElementById('accounts-lock-error');
+    var p1 = document.getElementById('accounts-pin-1').value;
+    if (!accountsHasPin()) {
+      var p2 = document.getElementById('accounts-pin-2').value;
+      if (!p1.trim()) { errEl.textContent = 'Enter a passcode.'; return; }
+      if (p1 !== p2) { errEl.textContent = "Passcodes don't match."; return; }
+      state.accountsPin = p1;
+      persist();
+      accountsUnlocked = true;
+      toast('Passcode set. This tab locks again next time you reload the page.');
+      renderAccountsLock();
+      renderDashAccounts();
+    } else if (accountsIsLocked()) {
+      if (p1 === state.accountsPin) {
+        accountsUnlocked = true;
+        renderAccountsLock();
+        renderAccounts();
+        renderDashAccounts();
+      } else {
+        errEl.textContent = 'Incorrect passcode. Try again.';
+      }
+    }
+  });
+  document.getElementById('accounts-relock-btn').addEventListener('click', function(){
+    accountsUnlocked = false;
+    renderAccountsLock();
+    renderDashAccounts();
+  });
+  document.getElementById('accounts-change-pin-btn').addEventListener('click', function(){
+    if (accountsIsLocked()) return;
+    var next = prompt('Enter a new passcode:');
+    if (next === null) return;
+    if (!next.trim()) { toast('Passcode unchanged.'); return; }
+    state.accountsPin = next.trim();
+    persist();
+    toast('Passcode updated.');
+  });
+  document.getElementById('accounts-remove-pin-btn').addEventListener('click', function(){
+    if (accountsIsLocked()) return;
+    if (!confirm('Remove the passcode? Anyone with access to this browser will then be able to view this tab without one.')) return;
+    state.accountsPin = null;
+    accountsUnlocked = true;
+    persist();
+    renderAccountsLock();
+    renderDashAccounts();
+    toast('Passcode removed.');
+  });
+
   // ---------- Accounts ----------
   var editingAccountId = null;
   var ACCOUNT_COLORS = ["var(--cat-transport)", "var(--cat-education)", "var(--cat-food)", "var(--cat-entertainment)", "var(--cat-subscriptions)", "var(--cat-shopping)", "var(--cat-bills)", "var(--cat-other)"];
@@ -1322,6 +1438,7 @@
   function renderDashAccounts() {
     var el = document.getElementById('dash-accounts');
     if (!el) return;
+    if (accountsIsLocked()) { el.innerHTML = '<div class="empty">🔒 Locked — open the Accounts tab and enter your passcode to view this.</div>'; return; }
     if (!state.accounts.length) { el.innerHTML = '<div class="empty">No accounts added yet — add them in the Accounts tab.</div>'; return; }
     var total = accountsTotal();
     el.innerHTML = state.accounts.map(function(a, i){
@@ -1510,6 +1627,7 @@
     renderIncomeTable();
     renderExpenseTable();
     renderGoals();
+    renderAccountsLock();
     renderAccounts();
     renderDashAccounts();
     renderBudget();
