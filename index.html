@@ -329,10 +329,11 @@
       <button class="tab-btn active" data-tab="dashboard"><span class="idx num">01</span>Dashboard</button>
       <button class="tab-btn" data-tab="income"><span class="idx num">02</span>Income</button>
       <button class="tab-btn" data-tab="expenses"><span class="idx num">03</span>Expenses</button>
-      <button class="tab-btn" data-tab="savings"><span class="idx num">04</span>Savings</button>
-      <button class="tab-btn" data-tab="budget"><span class="idx num">05</span>Budget</button>
-      <button class="tab-btn" data-tab="trends"><span class="idx num">06</span>Trends</button>
-      <button class="tab-btn" data-tab="statement"><span class="idx num">07</span>Statement</button>
+      <button class="tab-btn" data-tab="accounts"><span class="idx num">04</span>Accounts</button>
+      <button class="tab-btn" data-tab="savings"><span class="idx num">05</span>Savings</button>
+      <button class="tab-btn" data-tab="budget"><span class="idx num">06</span>Budget</button>
+      <button class="tab-btn" data-tab="trends"><span class="idx num">07</span>Trends</button>
+      <button class="tab-btn" data-tab="statement"><span class="idx num">08</span>Statement</button>
     </nav>
     <div class="cover-foot">
       <span class="stamp">Private</span><br>
@@ -382,7 +383,14 @@
         </div>
       </div>
 
-      <div class="card" id="insight-card"></div>
+      <div class="grid dash-mid">
+        <div class="card">
+          <h2 class="stencil">Where Your Money Sits</h2>
+          <div class="card-sub">Current balance by bank / e-wallet</div>
+          <div class="cat-list" id="dash-accounts"></div>
+        </div>
+        <div class="card" id="insight-card"></div>
+      </div>
     </section>
 
     <!-- INCOME -->
@@ -476,6 +484,34 @@
             <button class="btn small secondary" id="expense-filter-clear">Clear</button>
           </div>
           <div style="overflow-x:auto;"><table class="ledger" id="expense-table"></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACCOUNTS -->
+    <section class="view" id="view-accounts">
+      <div class="view-head">
+        <div><h1 class="stencil">Accounts</h1><div class="sub">How much you currently have in each bank or e-wallet.</div></div>
+      </div>
+      <div class="record-layout">
+        <div class="slip">
+          <div class="slip-title">Add Account</div>
+          <form class="entry-form" id="account-form">
+            <div class="field"><label for="a-name">Bank / e-wallet name</label><input type="text" id="a-name" placeholder="e.g. GX Bank" required></div>
+            <div class="field"><label for="a-amount">Current amount (RM)</label><input type="number" id="a-amount" min="0" step="0.01" placeholder="0.00" required></div>
+            <div class="form-actions">
+              <button type="submit" class="btn" id="account-submit-btn">Add account</button>
+              <button type="button" class="btn secondary" id="account-cancel-btn" style="display:none;">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+            <h2 class="stencil" style="margin-bottom:0;">Your Accounts</h2>
+            <div class="num" style="font-size:18px;font-weight:700;" id="accounts-total">RM 0.00</div>
+          </div>
+          <div class="card-sub" style="margin-top:2px;">Total across all accounts</div>
+          <div id="accounts-list"></div>
         </div>
       </div>
     </section>
@@ -689,7 +725,14 @@
     ];
     var budgets = { Food: 500, Transport: 200, Shopping: 300, Education: 100, Entertainment: 80, Bills: 300, Subscriptions: 40, Other: 50 };
     var allowances = {}; allowances[now.toISOString().slice(0,7)] = 1500;
-    return { income: income, expenses: expenses, savings: savings, budgets: budgets, allowances: allowances, seeded: true };
+    var accounts = [
+      { id: uid(), name: "Maybank", amount: 420.50 },
+      { id: uid(), name: "GX Bank", amount: 1180.00 },
+      { id: uid(), name: "Bank Rakyat", amount: 300.00 },
+      { id: uid(), name: "Versa", amount: 850.75 },
+      { id: uid(), name: "TNG eWallet", amount: 45.20 }
+    ];
+    return { income: income, expenses: expenses, savings: savings, budgets: budgets, allowances: allowances, accounts: accounts, seeded: true };
   }
 
   function init() {
@@ -697,6 +740,7 @@
     if (!state) { state = seedData(); persist(); }
     if (!state.budgets) state.budgets = {};
     if (!state.allowances) state.allowances = {};
+    if (!state.accounts) state.accounts = [];
     CATS.forEach(function(c){ if (!(c.key in state.budgets)) state.budgets[c.key] = 0; });
   }
 
@@ -757,7 +801,7 @@
     if (state.seeded) {
       slot.innerHTML = '<div class="sample-banner"><span><span class="stamp-tag">Specimen</span>These entries are examples so you can see how Kira works. Add your own anytime.</span><button id="clear-sample-btn">Start fresh</button></div>';
       document.getElementById('clear-sample-btn').addEventListener('click', function(){
-        state = { income: [], expenses: [], savings: [], budgets: {}, allowances: {}, seeded: false };
+        state = { income: [], expenses: [], savings: [], budgets: {}, allowances: {}, accounts: [], seeded: false };
         CATS.forEach(function(c){ state.budgets[c.key] = 0; });
         persist();
         renderAll();
@@ -1214,6 +1258,83 @@
     }
   });
 
+  // ---------- Accounts ----------
+  var editingAccountId = null;
+  var ACCOUNT_COLORS = ["var(--cat-transport)", "var(--cat-education)", "var(--cat-food)", "var(--cat-entertainment)", "var(--cat-subscriptions)", "var(--cat-shopping)", "var(--cat-bills)", "var(--cat-other)"];
+  function accountsTotal() { return state.accounts.reduce(function(a,x){ return a + Number(x.amount||0); }, 0); }
+  function renderAccounts() {
+    document.getElementById('accounts-total').textContent = fmt(accountsTotal());
+    var el = document.getElementById('accounts-list');
+    if (!state.accounts.length) { el.innerHTML = '<div class="empty">No accounts yet — add your first bank or e-wallet on the left.</div>'; return; }
+    var html = '<table class="budget-table"><thead><tr><th>Bank / e-wallet</th><th class="num">Current amount</th><th></th></tr></thead><tbody>';
+    state.accounts.forEach(function(a){
+      html += '<tr><td>' + esc(a.name) + '</td>' +
+        '<td class="num"><input type="number" min="0" step="0.01" value="' + a.amount + '" data-account-input="' + a.id + '"></td>' +
+        '<td><div class="row-actions"><button class="icon-btn danger" data-del-account="' + a.id + '" aria-label="Delete">✕</button></div></td></tr>';
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  }
+  document.getElementById('account-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var entry = {
+      id: editingAccountId || uid(),
+      name: document.getElementById('a-name').value.trim(),
+      amount: parseFloat(document.getElementById('a-amount').value)||0
+    };
+    if (!entry.name) return;
+    if (editingAccountId) state.accounts = state.accounts.map(function(x){ return x.id===editingAccountId? entry : x; });
+    else state.accounts.push(entry);
+    state.seeded = false;
+    persist();
+    resetAccountForm();
+    renderAll();
+  });
+  document.getElementById('account-cancel-btn').addEventListener('click', resetAccountForm);
+  function resetAccountForm() {
+    editingAccountId = null;
+    document.getElementById('account-form').reset();
+    document.getElementById('account-submit-btn').textContent = 'Add account';
+    document.getElementById('account-cancel-btn').style.display = 'none';
+  }
+  document.getElementById('accounts-list').addEventListener('click', function(e){
+    var delId = e.target.getAttribute('data-del-account');
+    if (delId) {
+      state.accounts = state.accounts.filter(function(x){return x.id!==delId;});
+      state.seeded = false;
+      persist();
+      renderAll();
+    }
+  });
+  document.getElementById('accounts-list').addEventListener('change', function(e){
+    var id = e.target.getAttribute('data-account-input');
+    if (!id) return;
+    state.accounts = state.accounts.map(function(a){
+      if (a.id===id) return Object.assign({}, a, { amount: parseFloat(e.target.value)||0 });
+      return a;
+    });
+    state.seeded = false;
+    persist();
+    renderAccounts();
+    renderDashAccounts();
+  });
+
+  function renderDashAccounts() {
+    var el = document.getElementById('dash-accounts');
+    if (!el) return;
+    if (!state.accounts.length) { el.innerHTML = '<div class="empty">No accounts added yet — add them in the Accounts tab.</div>'; return; }
+    var total = accountsTotal();
+    el.innerHTML = state.accounts.map(function(a, i){
+      var p = total>0 ? (Number(a.amount||0)/total*100) : 0;
+      var color = ACCOUNT_COLORS[i % ACCOUNT_COLORS.length];
+      return '<div class="cat-row">' +
+        '<div class="cat-name"><span class="cat-swatch" style="background:'+color+'"></span>' + esc(a.name) + '</div>' +
+        '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:'+p.toFixed(1)+'%;background:'+color+';"></div></div>' +
+        '<div class="cat-amt num">' + fmt(a.amount) + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
   // ---------- Budget ----------
   function renderBudget() {
     var now = new Date();
@@ -1389,6 +1510,8 @@
     renderIncomeTable();
     renderExpenseTable();
     renderGoals();
+    renderAccounts();
+    renderDashAccounts();
     renderBudget();
   }
 
