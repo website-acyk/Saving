@@ -157,7 +157,7 @@
 
   /* ---------- stat strip ---------- */
   .grid { display: grid; gap: 14px; }
-  .stat-row { grid-template-columns: repeat(5, minmax(0,1fr)); }
+  .stat-row { grid-template-columns: repeat(6, minmax(0,1fr)); }
   .dash-mid { grid-template-columns: 1.35fr 1fr; align-items: start; }
   @media (max-width: 1020px) { .stat-row { grid-template-columns: repeat(3, minmax(0,1fr)); } .dash-mid { grid-template-columns: 1fr; } }
 
@@ -265,6 +265,19 @@
   .goal-card .g-add input { flex: 1; border: 1px solid var(--border); }
   .goal-card .row-actions { position: absolute; bottom: 10px; right: 10px; }
 
+  /* ---------- Loans ---------- */
+  .loan-card { padding-bottom: 46px; }
+  .loan-card .g-outstanding { font-size: 12.5px; color: var(--ink-soft); margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .loan-card .g-outstanding strong { color: var(--ink); font-family: "IBM Plex Mono", monospace; }
+  .loan-card .g-add { display: grid; grid-template-columns: 108px 1fr auto; gap: 6px; margin-top: 10px; }
+  .loan-card .g-add input { border: 1px solid var(--border); }
+  .loan-history { margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 8px; }
+  .loan-history-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-faint); font-weight: 700; margin-bottom: 6px; }
+  .repay-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; padding: 3px 0; color: var(--ink-soft); }
+  .repay-row .amt { color: var(--credit); font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+  .repay-row .icon-btn { padding: 0 4px; font-size: 11px; }
+  .repay-empty { font-size: 12px; color: var(--ink-faint); }
+
   .budget-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   .budget-table th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); font-weight: 700; padding: 0 8px 8px; border-bottom: 1px solid var(--border); }
   .budget-table td { padding: 11px 8px; border-bottom: 1px solid var(--rule); }
@@ -338,9 +351,10 @@
       <button class="tab-btn" data-tab="expenses"><span class="idx num">03</span>Expenses</button>
       <button class="tab-btn" data-tab="accounts"><span class="idx num">04</span>Accounts<span class="tab-lock" id="accounts-tab-lock" style="margin-left:auto;display:none;">🔒</span></button>
       <button class="tab-btn" data-tab="savings"><span class="idx num">05</span>Savings</button>
-      <button class="tab-btn" data-tab="budget"><span class="idx num">06</span>Budget</button>
-      <button class="tab-btn" data-tab="trends"><span class="idx num">07</span>Trends</button>
-      <button class="tab-btn" data-tab="statement"><span class="idx num">08</span>Statement</button>
+      <button class="tab-btn" data-tab="loan"><span class="idx num">06</span>Loan</button>
+      <button class="tab-btn" data-tab="budget"><span class="idx num">07</span>Budget</button>
+      <button class="tab-btn" data-tab="trends"><span class="idx num">08</span>Trends</button>
+      <button class="tab-btn" data-tab="statement"><span class="idx num">09</span>Statement</button>
     </nav>
     <div class="cover-foot">
       <span class="stamp">Private</span><br>
@@ -362,6 +376,7 @@
         <div class="card stat"><div class="label">Expenses this month</div><div class="value num neg" id="s-expenses">—</div><div class="hint" id="s-expenses-hint"></div></div>
         <div class="card stat"><div class="label">Total savings</div><div class="value num" id="s-savings">—</div><div class="hint" id="s-savings-hint"></div></div>
         <div class="card stat"><div class="label">Budget remaining</div><div class="value num" id="s-budget">—</div><div class="hint" id="s-budget-hint"></div></div>
+        <div class="card stat"><div class="label">Loans outstanding</div><div class="value num" id="s-loans">—</div><div class="hint" id="s-loans-hint"></div></div>
       </div>
 
       <div class="grid dash-mid">
@@ -397,6 +412,12 @@
           <div class="cat-list" id="dash-accounts"></div>
         </div>
         <div class="card" id="insight-card"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="stencil">Money Others Owe You</h2>
+        <div class="card-sub" id="dash-loans-sub">Outstanding loans, by borrower</div>
+        <div class="cat-list" id="dash-loans"></div>
       </div>
     </section>
 
@@ -572,6 +593,43 @@
         <div class="card">
           <h2 class="stencil">Your Goals</h2>
           <div class="goal-cards" id="goal-cards"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOAN -->
+    <section class="view" id="view-loan">
+      <div class="view-head">
+        <div><h1 class="stencil">Loan</h1><div class="sub">Money you've lent to other people — what they owe, what they've paid back, and what's left.</div></div>
+      </div>
+
+      <div class="grid stat-row" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+        <div class="card stat"><div class="label">Total lent out</div><div class="value num" id="loan-s-lent">—</div><div class="hint">across all borrowers</div></div>
+        <div class="card stat"><div class="label">Total repaid</div><div class="value num pos" id="loan-s-repaid">—</div><div class="hint">received back so far</div></div>
+        <div class="card stat"><div class="label">Still owed to you</div><div class="value num" id="loan-s-outstanding">—</div><div class="hint" id="loan-s-outstanding-hint"></div></div>
+      </div>
+
+      <div class="record-layout">
+        <div class="slip">
+          <div class="slip-title">Record a Loan</div>
+          <form class="entry-form" id="loan-form">
+            <div class="field"><label for="l-borrower">Borrower's name</label><input type="text" id="l-borrower" placeholder="e.g. Ah Wei" required></div>
+            <div class="field-row">
+              <div class="field"><label for="l-amount">Amount lent (RM)</label><input type="number" id="l-amount" min="0" step="0.01" placeholder="0.00" required></div>
+              <div class="field"><label for="l-date">Date lent</label><input type="date" id="l-date" required></div>
+            </div>
+            <div class="field"><label for="l-monthly">Agreed monthly repayment (RM)</label><input type="number" id="l-monthly" min="0" step="0.01" value="0" placeholder="0.00"></div>
+            <div class="field"><label for="l-note">Reason / note (optional)</label><input type="text" id="l-note" placeholder="e.g. Emergency, car repair"></div>
+            <div class="form-actions">
+              <button type="submit" class="btn" id="loan-submit-btn">Add loan</button>
+              <button type="button" class="btn secondary" id="loan-cancel-btn" style="display:none;">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <h2 class="stencil">Who Owes You</h2>
+          <div class="card-sub">Add a repayment as it comes in — the remaining balance updates automatically.</div>
+          <div class="goal-cards" id="loan-cards"></div>
         </div>
       </div>
     </section>
@@ -761,7 +819,13 @@
       { id: uid(), name: "Versa", amount: 850.75 },
       { id: uid(), name: "TNG eWallet", amount: 45.20 }
     ];
-    return { income: income, expenses: expenses, savings: savings, budgets: budgets, allowances: allowances, accounts: accounts, seeded: true };
+    var loans = [
+      { id: uid(), borrower: "Ah Wei", amount: 500, date: monthsAgo(2,3), monthly: 100, note: "Emergency, car repair",
+        repayments: [ { id: uid(), date: monthsAgo(1,3), amount: 100 }, { id: uid(), date: monthsAgo(0,3), amount: 100 } ] },
+      { id: uid(), borrower: "Mei Ling", amount: 200, date: monthsAgo(1,20), monthly: 50, note: "Lunch money, tight month",
+        repayments: [] }
+    ];
+    return { income: income, expenses: expenses, savings: savings, budgets: budgets, allowances: allowances, accounts: accounts, loans: loans, seeded: true };
   }
 
   function init() {
@@ -770,6 +834,8 @@
     if (!state.budgets) state.budgets = {};
     if (!state.allowances) state.allowances = {};
     if (!state.accounts) state.accounts = [];
+    if (!state.loans) state.loans = [];
+    state.loans.forEach(function(l){ if (!l.repayments) l.repayments = []; });
     if (!('accountsPin' in state)) state.accountsPin = null;
     CATS.forEach(function(c){ if (!(c.key in state.budgets)) state.budgets[c.key] = 0; });
   }
@@ -833,7 +899,7 @@
       slot.innerHTML = '<div class="sample-banner"><span><span class="stamp-tag">Specimen</span>These entries are examples so you can see how Kira works. Add your own anytime.</span><button id="clear-sample-btn">Start fresh</button></div>';
       document.getElementById('clear-sample-btn').addEventListener('click', function(){
         var keepPin = state.accountsPin || null;
-        state = { income: [], expenses: [], savings: [], budgets: {}, allowances: {}, accounts: [], accountsPin: keepPin, seeded: false };
+        state = { income: [], expenses: [], savings: [], budgets: {}, allowances: {}, accounts: [], loans: [], accountsPin: keepPin, seeded: false };
         CATS.forEach(function(c){ state.budgets[c.key] = 0; });
         persist();
         renderAll();
@@ -875,6 +941,12 @@
     });
     var budgetRemaining = totalBudget - totalSpentBudgeted;
 
+    var loansOutstanding = 0, loansActive = 0;
+    state.loans.forEach(function(l){
+      var t = loanTotals(l);
+      if (t.remaining > 0.004) { loansOutstanding += t.remaining; loansActive++; }
+    });
+
     document.getElementById('s-balance').textContent = fmt(balance);
     document.getElementById('s-balance').className = 'value num ' + (balance<0?'neg':'');
     document.getElementById('s-income').textContent = fmt(incomeMonth);
@@ -886,12 +958,41 @@
     document.getElementById('s-budget').textContent = totalBudget>0 ? fmt(budgetRemaining) : '—';
     document.getElementById('s-budget').className = 'value num ' + (totalBudget>0 && budgetRemaining<0?'neg':'');
     document.getElementById('s-budget-hint').textContent = totalBudget>0 ? ('of ' + fmt(totalBudget) + ' budgeted') : 'set budgets to track this';
+    document.getElementById('s-loans').textContent = state.loans.length ? fmt(loansOutstanding) : '—';
+    document.getElementById('s-loans-hint').textContent = state.loans.length ? (loansActive + ' loan' + (loansActive===1?'':'s') + ' not yet fully paid') : 'record one in the Loan tab';
 
     renderCashflowChart();
     renderCategoryBreakdown(curKey, expenseMonth);
     renderRecentTxns(balance);
     renderDashGoals();
+    renderDashLoans();
     renderInsight(curKey, incomeMonth, expenseMonth, savedMonth, rate);
+  }
+
+  function loanTotals(loan) {
+    var repaid = (loan.repayments||[]).reduce(function(a,r){ return a+Number(r.amount||0); }, 0);
+    var remaining = Number(loan.amount||0) - repaid;
+    return { repaid: repaid, remaining: remaining };
+  }
+
+  function renderDashLoans() {
+    var el = document.getElementById('dash-loans');
+    if (!el) return;
+    var rows = state.loans.map(function(l){ return { l: l, t: loanTotals(l) }; })
+      .filter(function(r){ return r.t.remaining > 0.004; })
+      .sort(function(a,b){ return b.t.remaining - a.t.remaining; });
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty">' + (state.loans.length ? 'Everyone has paid you back in full.' : 'No loans recorded yet — add one in the Loan tab.') + '</div>';
+      return;
+    }
+    el.innerHTML = rows.map(function(r){
+      var p = r.l.amount>0 ? Math.min(100, r.t.repaid/r.l.amount*100) : 0;
+      return '<div class="cat-row">' +
+        '<div class="cat-name"><span class="cat-swatch" style="background:var(--gold)"></span>' + esc(r.l.borrower) + '</div>' +
+        '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:'+p.toFixed(1)+'%;background:var(--gold);"></div></div>' +
+        '<div class="cat-amt num">' + fmt(r.t.remaining) + '</div>' +
+        '</div>';
+    }).join('');
   }
 
   function last6MonthKeys() {
@@ -1290,6 +1391,128 @@
     }
   });
 
+  // ---------- Loans ----------
+  var editingLoanId = null;
+  function loanStatusPill(loan, t) {
+    if (t.remaining <= 0.004) return '<span class="pill ok">paid off</span>';
+    if (t.repaid > 0) return '<span class="pill warn">partially paid</span>';
+    return '<span class="pill flat">not yet paid</span>';
+  }
+  function renderLoans() {
+    var totalLent = 0, totalRepaid = 0, totalOutstanding = 0;
+    state.loans.forEach(function(l){ var t = loanTotals(l); totalLent += Number(l.amount||0); totalRepaid += t.repaid; totalOutstanding += Math.max(0, t.remaining); });
+    document.getElementById('loan-s-lent').textContent = fmt(totalLent);
+    document.getElementById('loan-s-repaid').textContent = fmt(totalRepaid);
+    document.getElementById('loan-s-outstanding').textContent = fmt(totalOutstanding);
+    document.getElementById('loan-s-outstanding-hint').textContent = state.loans.length + ' loan' + (state.loans.length===1?'':'s') + ' recorded';
+
+    var el = document.getElementById('loan-cards');
+    if (!state.loans.length) { el.innerHTML = '<div class="empty">No loans recorded yet — record who borrowed from you on the left.</div>'; return; }
+    var sorted = state.loans.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
+    el.innerHTML = sorted.map(function(l){
+      var t = loanTotals(l);
+      var p = l.amount>0 ? Math.min(100, t.repaid/l.amount*100) : 0;
+      var dateStr = l.date ? new Date(l.date).toLocaleDateString('en-MY', {month:'short', day:'numeric', year:'numeric'}) : '—';
+      var repayHtml;
+      var reps = (l.repayments||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+      if (!reps.length) {
+        repayHtml = '<div class="repay-empty">No repayments recorded yet.</div>';
+      } else {
+        repayHtml = reps.map(function(r){
+          return '<div class="repay-row"><span>' + r.date + '</span><span class="amt num">' + fmt(r.amount) + '</span><button class="icon-btn danger" data-del-repay="' + l.id + ':' + r.id + '" aria-label="Delete repayment">✕</button></div>';
+        }).join('');
+      }
+      return '<div class="card goal-card loan-card">' +
+        '<div class="g-title"><h3>' + esc(l.borrower) + '</h3></div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:'+p.toFixed(1)+'%;background:var(--gold);"></div></div>' +
+        '<div class="g-amounts"><span class="cur num">' + fmt(t.repaid) + ' repaid</span><span class="num">' + pct(p) + ' of ' + fmt(l.amount) + '</span></div>' +
+        '<div class="g-meta"><span>RM ' + Number(l.monthly||0).toLocaleString('en-MY',{minimumFractionDigits:0}) + '/mo agreed</span><span>lent ' + dateStr + '</span></div>' +
+        (l.note ? '<div class="card-sub" style="margin:6px 0 0;">' + esc(l.note) + '</div>' : '') +
+        '<div class="g-outstanding">Outstanding: <strong>' + fmt(Math.max(0,t.remaining)) + '</strong> ' + loanStatusPill(l, t) + '</div>' +
+        '<div class="g-add"><input type="date" data-repay-date="'+l.id+'" value="'+todayStr()+'"><input type="number" min="0" step="0.01" placeholder="Repayment (RM)" data-repay-input="'+l.id+'"><button class="btn small" data-repay-btn="'+l.id+'">Add</button></div>' +
+        '<div class="loan-history"><div class="loan-history-title">Repayment history</div>' + repayHtml + '</div>' +
+        '<div class="row-actions"><button class="icon-btn" data-edit-loan="'+l.id+'" aria-label="Edit">✎</button><button class="icon-btn danger" data-del-loan="'+l.id+'" aria-label="Delete">✕</button></div>' +
+        '</div>';
+    }).join('');
+  }
+  document.getElementById('loan-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var entry = {
+      id: editingLoanId || uid(),
+      borrower: document.getElementById('l-borrower').value.trim(),
+      amount: parseFloat(document.getElementById('l-amount').value)||0,
+      date: document.getElementById('l-date').value || todayStr(),
+      monthly: parseFloat(document.getElementById('l-monthly').value)||0,
+      note: document.getElementById('l-note').value.trim(),
+      repayments: editingLoanId ? (state.loans.find(function(x){return x.id===editingLoanId;})||{}).repayments || [] : []
+    };
+    if (!entry.borrower) return;
+    if (editingLoanId) state.loans = state.loans.map(function(x){ return x.id===editingLoanId? entry : x; });
+    else state.loans.push(entry);
+    state.seeded = false;
+    persist();
+    resetLoanForm();
+    renderAll();
+  });
+  document.getElementById('loan-cancel-btn').addEventListener('click', resetLoanForm);
+  function resetLoanForm() {
+    editingLoanId = null;
+    document.getElementById('loan-form').reset();
+    document.getElementById('l-date').value = todayStr();
+    document.getElementById('l-monthly').value = 0;
+    document.getElementById('loan-submit-btn').textContent = 'Add loan';
+    document.getElementById('loan-cancel-btn').style.display = 'none';
+  }
+  document.getElementById('loan-cards').addEventListener('click', function(e){
+    var editId = e.target.getAttribute('data-edit-loan');
+    var delId = e.target.getAttribute('data-del-loan');
+    var repayId = e.target.getAttribute('data-repay-btn');
+    var delRepay = e.target.getAttribute('data-del-repay');
+    if (editId) {
+      var r = state.loans.find(function(x){return x.id===editId;});
+      if (!r) return;
+      editingLoanId = editId;
+      document.getElementById('l-borrower').value = r.borrower;
+      document.getElementById('l-amount').value = r.amount;
+      document.getElementById('l-date').value = r.date;
+      document.getElementById('l-monthly').value = r.monthly||0;
+      document.getElementById('l-note').value = r.note||'';
+      document.getElementById('loan-submit-btn').textContent = 'Save changes';
+      document.getElementById('loan-cancel-btn').style.display = 'inline-block';
+      window.scrollTo({top:0, behavior:'smooth'});
+    } else if (delId) {
+      if (!confirm('Delete this loan and its repayment history?')) return;
+      state.loans = state.loans.filter(function(x){return x.id!==delId;});
+      state.seeded = false;
+      persist();
+      renderAll();
+    } else if (repayId) {
+      var input = document.querySelector('[data-repay-input="'+repayId+'"]');
+      var dateInput = document.querySelector('[data-repay-date="'+repayId+'"]');
+      var amt = parseFloat(input.value)||0;
+      if (amt<=0) return;
+      var date = dateInput.value || todayStr();
+      state.loans = state.loans.map(function(l){
+        if (l.id!==repayId) return l;
+        var reps = (l.repayments||[]).concat([{ id: uid(), date: date, amount: amt }]);
+        return Object.assign({}, l, { repayments: reps });
+      });
+      state.seeded = false;
+      persist();
+      renderAll();
+    } else if (delRepay) {
+      var parts = delRepay.split(':');
+      var loanId = parts[0], repId = parts[1];
+      state.loans = state.loans.map(function(l){
+        if (l.id!==loanId) return l;
+        return Object.assign({}, l, { repayments: (l.repayments||[]).filter(function(r){return r.id!==repId;}) });
+      });
+      state.seeded = false;
+      persist();
+      renderAll();
+    }
+  });
+
   // ---------- Accounts lock ----------
   var accountsUnlocked = false;
   function accountsHasPin() { return !!(state.accountsPin && String(state.accountsPin).length); }
@@ -1631,10 +1854,12 @@
     renderAccounts();
     renderDashAccounts();
     renderBudget();
+    renderLoans();
   }
 
   document.getElementById('i-date').value = todayStr();
   document.getElementById('e-date').value = todayStr();
+  document.getElementById('l-date').value = todayStr();
   document.getElementById('stmt-month').value = todayStr().slice(0,7);
 
   init();
