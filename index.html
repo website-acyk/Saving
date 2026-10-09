@@ -351,7 +351,7 @@
       <button class="tab-btn" data-tab="expenses"><span class="idx num">03</span>Expenses</button>
       <button class="tab-btn" data-tab="accounts"><span class="idx num">04</span>Accounts<span class="tab-lock" id="accounts-tab-lock" style="margin-left:auto;display:none;">🔒</span></button>
       <button class="tab-btn" data-tab="savings"><span class="idx num">05</span>Savings</button>
-      <button class="tab-btn" data-tab="loan"><span class="idx num">06</span>Loan</button>
+      <button class="tab-btn" data-tab="loan"><span class="idx num">06</span>Loan<span class="tab-lock" id="loan-tab-lock" style="margin-left:auto;display:none;">🔒</span></button>
       <button class="tab-btn" data-tab="budget"><span class="idx num">07</span>Budget</button>
       <button class="tab-btn" data-tab="trends"><span class="idx num">08</span>Trends</button>
       <button class="tab-btn" data-tab="statement"><span class="idx num">09</span>Statement</button>
@@ -603,33 +603,55 @@
         <div><h1 class="stencil">Loan</h1><div class="sub">Money you've lent to other people — what they owe, what they've paid back, and what's left.</div></div>
       </div>
 
-      <div class="grid stat-row" style="grid-template-columns:repeat(3,minmax(0,1fr));">
-        <div class="card stat"><div class="label">Total lent out</div><div class="value num" id="loan-s-lent">—</div><div class="hint">across all borrowers</div></div>
-        <div class="card stat"><div class="label">Total repaid</div><div class="value num pos" id="loan-s-repaid">—</div><div class="hint">received back so far</div></div>
-        <div class="card stat"><div class="label">Still owed to you</div><div class="value num" id="loan-s-outstanding">—</div><div class="hint" id="loan-s-outstanding-hint"></div></div>
+      <div class="card lock-card" id="loan-lock" style="max-width:380px;">
+        <div class="lock-icon">🔒</div>
+        <h2 class="stencil" id="loan-lock-title">Set a passcode</h2>
+        <div class="card-sub" id="loan-lock-sub">Protect this tab so no one else can see who owes you money.</div>
+        <form id="loan-lock-form" autocomplete="off">
+          <div class="field"><label for="loan-pin-1" id="loan-pin-1-label">New passcode</label><input type="password" inputmode="numeric" id="loan-pin-1" placeholder="e.g. 4 digits or a word" required></div>
+          <div class="field" id="loan-pin-2-wrap"><label for="loan-pin-2">Confirm passcode</label><input type="password" inputmode="numeric" id="loan-pin-2" placeholder="Re-enter passcode"></div>
+          <div class="lock-error" id="loan-lock-error"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn" id="loan-lock-submit-btn">Set passcode &amp; unlock</button>
+          </div>
+        </form>
       </div>
 
-      <div class="record-layout">
-        <div class="slip">
-          <div class="slip-title">Record a Loan</div>
-          <form class="entry-form" id="loan-form">
-            <div class="field"><label for="l-borrower">Borrower's name</label><input type="text" id="l-borrower" placeholder="e.g. Ah Wei" required></div>
-            <div class="field-row">
-              <div class="field"><label for="l-amount">Amount lent (RM)</label><input type="number" id="l-amount" min="0" step="0.01" placeholder="0.00" required></div>
-              <div class="field"><label for="l-date">Date lent</label><input type="date" id="l-date" required></div>
-            </div>
-            <div class="field"><label for="l-monthly">Agreed monthly repayment (RM)</label><input type="number" id="l-monthly" min="0" step="0.01" value="0" placeholder="0.00"></div>
-            <div class="field"><label for="l-note">Reason / note (optional)</label><input type="text" id="l-note" placeholder="e.g. Emergency, car repair"></div>
-            <div class="form-actions">
-              <button type="submit" class="btn" id="loan-submit-btn">Add loan</button>
-              <button type="button" class="btn secondary" id="loan-cancel-btn" style="display:none;">Cancel</button>
-            </div>
-          </form>
+      <div id="loan-content" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="btn small secondary" id="loan-relock-btn">🔒 Lock this tab</button>
+          <button class="btn small secondary" id="loan-change-pin-btn">Change passcode</button>
+          <button class="btn small secondary" id="loan-remove-pin-btn">Remove passcode</button>
         </div>
-        <div class="card">
-          <h2 class="stencil">Who Owes You</h2>
-          <div class="card-sub">Add a repayment as it comes in — the remaining balance updates automatically.</div>
-          <div class="goal-cards" id="loan-cards"></div>
+
+        <div class="grid stat-row" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+          <div class="card stat"><div class="label">Total lent out</div><div class="value num" id="loan-s-lent">—</div><div class="hint">across all borrowers</div></div>
+          <div class="card stat"><div class="label">Total repaid</div><div class="value num pos" id="loan-s-repaid">—</div><div class="hint">received back so far</div></div>
+          <div class="card stat"><div class="label">Still owed to you</div><div class="value num" id="loan-s-outstanding">—</div><div class="hint" id="loan-s-outstanding-hint"></div></div>
+        </div>
+
+        <div class="record-layout" style="margin-top:22px;">
+          <div class="slip">
+            <div class="slip-title">Record a Loan</div>
+            <form class="entry-form" id="loan-form">
+              <div class="field"><label for="l-borrower">Borrower's name</label><input type="text" id="l-borrower" placeholder="e.g. Ah Wei" required></div>
+              <div class="field-row">
+                <div class="field"><label for="l-amount">Amount lent (RM)</label><input type="number" id="l-amount" min="0" step="0.01" placeholder="0.00" required></div>
+                <div class="field"><label for="l-date">Date lent</label><input type="date" id="l-date" required></div>
+              </div>
+              <div class="field"><label for="l-monthly">Agreed monthly repayment (RM)</label><input type="number" id="l-monthly" min="0" step="0.01" value="0" placeholder="0.00"></div>
+              <div class="field"><label for="l-note">Reason / note (optional)</label><input type="text" id="l-note" placeholder="e.g. Emergency, car repair"></div>
+              <div class="form-actions">
+                <button type="submit" class="btn" id="loan-submit-btn">Add loan</button>
+                <button type="button" class="btn secondary" id="loan-cancel-btn" style="display:none;">Cancel</button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <h2 class="stencil">Who Owes You</h2>
+            <div class="card-sub">Add a repayment as it comes in — the remaining balance updates automatically.</div>
+            <div class="goal-cards" id="loan-cards"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -837,6 +859,7 @@
     if (!state.loans) state.loans = [];
     state.loans.forEach(function(l){ if (!l.repayments) l.repayments = []; });
     if (!('accountsPin' in state)) state.accountsPin = null;
+    if (!('loansPin' in state)) state.loansPin = null;
     CATS.forEach(function(c){ if (!(c.key in state.budgets)) state.budgets[c.key] = 0; });
   }
 
@@ -890,6 +913,7 @@
     if (tab === 'trends') renderTrends();
     if (tab === 'statement') renderStatement();
     if (tab === 'accounts') renderAccountsLock();
+    if (tab === 'loan') renderLoanLock();
   });
 
   // ---------- Sample banner ----------
@@ -899,7 +923,8 @@
       slot.innerHTML = '<div class="sample-banner"><span><span class="stamp-tag">Specimen</span>These entries are examples so you can see how Kira works. Add your own anytime.</span><button id="clear-sample-btn">Start fresh</button></div>';
       document.getElementById('clear-sample-btn').addEventListener('click', function(){
         var keepPin = state.accountsPin || null;
-        state = { income: [], expenses: [], savings: [], budgets: {}, allowances: {}, accounts: [], loans: [], accountsPin: keepPin, seeded: false };
+        var keepLoanPin = state.loansPin || null;
+        state = { income: [], expenses: [], savings: [], budgets: {}, allowances: {}, accounts: [], loans: [], accountsPin: keepPin, loansPin: keepLoanPin, seeded: false };
         CATS.forEach(function(c){ state.budgets[c.key] = 0; });
         persist();
         renderAll();
@@ -958,8 +983,13 @@
     document.getElementById('s-budget').textContent = totalBudget>0 ? fmt(budgetRemaining) : '—';
     document.getElementById('s-budget').className = 'value num ' + (totalBudget>0 && budgetRemaining<0?'neg':'');
     document.getElementById('s-budget-hint').textContent = totalBudget>0 ? ('of ' + fmt(totalBudget) + ' budgeted') : 'set budgets to track this';
-    document.getElementById('s-loans').textContent = state.loans.length ? fmt(loansOutstanding) : '—';
-    document.getElementById('s-loans-hint').textContent = state.loans.length ? (loansActive + ' loan' + (loansActive===1?'':'s') + ' not yet fully paid') : 'record one in the Loan tab';
+    if (loansIsLocked()) {
+      document.getElementById('s-loans').textContent = '🔒';
+      document.getElementById('s-loans-hint').textContent = 'locked — open the Loan tab';
+    } else {
+      document.getElementById('s-loans').textContent = state.loans.length ? fmt(loansOutstanding) : '—';
+      document.getElementById('s-loans-hint').textContent = state.loans.length ? (loansActive + ' loan' + (loansActive===1?'':'s') + ' not yet fully paid') : 'record one in the Loan tab';
+    }
 
     renderCashflowChart();
     renderCategoryBreakdown(curKey, expenseMonth);
@@ -978,6 +1008,7 @@
   function renderDashLoans() {
     var el = document.getElementById('dash-loans');
     if (!el) return;
+    if (loansIsLocked()) { el.innerHTML = '<div class="empty">🔒 Locked — open the Loan tab and enter your passcode to view this.</div>'; return; }
     var rows = state.loans.map(function(l){ return { l: l, t: loanTotals(l) }; })
       .filter(function(r){ return r.t.remaining > 0.004; })
       .sort(function(a,b){ return b.t.remaining - a.t.remaining; });
@@ -1597,6 +1628,90 @@
     toast('Passcode removed.');
   });
 
+  // ---------- Loan lock ----------
+  var loansUnlocked = false;
+  function loansHasPin() { return !!(state.loansPin && String(state.loansPin).length); }
+  function loansIsLocked() { return loansHasPin() && !loansUnlocked; }
+  function renderLoanLock() {
+    var lockEl = document.getElementById('loan-lock');
+    var contentEl = document.getElementById('loan-content');
+    var tabIcon = document.getElementById('loan-tab-lock');
+    var errEl = document.getElementById('loan-lock-error');
+    if (tabIcon) tabIcon.style.display = loansHasPin() ? '' : 'none';
+    if (errEl) errEl.textContent = '';
+    var form = document.getElementById('loan-lock-form');
+    if (form) form.reset();
+    if (!loansHasPin()) {
+      lockEl.style.display = '';
+      contentEl.style.display = 'none';
+      document.getElementById('loan-lock-title').textContent = 'Set a passcode';
+      document.getElementById('loan-lock-sub').textContent = 'Protect this tab so no one else can see who owes you money.';
+      document.getElementById('loan-pin-1-label').textContent = 'New passcode';
+      document.getElementById('loan-pin-2-wrap').style.display = '';
+      document.getElementById('loan-lock-submit-btn').textContent = 'Set passcode & unlock';
+    } else if (loansIsLocked()) {
+      lockEl.style.display = '';
+      contentEl.style.display = 'none';
+      document.getElementById('loan-lock-title').textContent = 'Enter passcode';
+      document.getElementById('loan-lock-sub').textContent = 'This tab is locked. Enter your passcode to view your loans.';
+      document.getElementById('loan-pin-1-label').textContent = 'Passcode';
+      document.getElementById('loan-pin-2-wrap').style.display = 'none';
+      document.getElementById('loan-lock-submit-btn').textContent = 'Unlock';
+    } else {
+      lockEl.style.display = 'none';
+      contentEl.style.display = '';
+    }
+  }
+  document.getElementById('loan-lock-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var errEl = document.getElementById('loan-lock-error');
+    var p1 = document.getElementById('loan-pin-1').value;
+    if (!loansHasPin()) {
+      var p2 = document.getElementById('loan-pin-2').value;
+      if (!p1.trim()) { errEl.textContent = 'Enter a passcode.'; return; }
+      if (p1 !== p2) { errEl.textContent = "Passcodes don't match."; return; }
+      state.loansPin = p1;
+      persist();
+      loansUnlocked = true;
+      toast('Passcode set. This tab locks again next time you reload the page.');
+      renderLoanLock();
+      renderDashboard();
+    } else if (loansIsLocked()) {
+      if (p1 === state.loansPin) {
+        loansUnlocked = true;
+        renderLoanLock();
+        renderLoans();
+        renderDashboard();
+      } else {
+        errEl.textContent = 'Incorrect passcode. Try again.';
+      }
+    }
+  });
+  document.getElementById('loan-relock-btn').addEventListener('click', function(){
+    loansUnlocked = false;
+    renderLoanLock();
+    renderDashboard();
+  });
+  document.getElementById('loan-change-pin-btn').addEventListener('click', function(){
+    if (loansIsLocked()) return;
+    var next = prompt('Enter a new passcode:');
+    if (next === null) return;
+    if (!next.trim()) { toast('Passcode unchanged.'); return; }
+    state.loansPin = next.trim();
+    persist();
+    toast('Passcode updated.');
+  });
+  document.getElementById('loan-remove-pin-btn').addEventListener('click', function(){
+    if (loansIsLocked()) return;
+    if (!confirm('Remove the passcode? Anyone with access to this browser will then be able to view this tab without one.')) return;
+    state.loansPin = null;
+    loansUnlocked = true;
+    persist();
+    renderLoanLock();
+    renderDashboard();
+    toast('Passcode removed.');
+  });
+
   // ---------- Accounts ----------
   var editingAccountId = null;
   var ACCOUNT_COLORS = ["var(--cat-transport)", "var(--cat-education)", "var(--cat-food)", "var(--cat-entertainment)", "var(--cat-subscriptions)", "var(--cat-shopping)", "var(--cat-bills)", "var(--cat-other)"];
@@ -1854,6 +1969,7 @@
     renderAccounts();
     renderDashAccounts();
     renderBudget();
+    renderLoanLock();
     renderLoans();
   }
 
